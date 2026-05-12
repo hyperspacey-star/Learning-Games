@@ -24,13 +24,13 @@
         }
         button { 
             color: white; 
-            padding: 20px 40px; 
-            font-size: 28px; 
+            padding: 20px; 
+            font-size: 24px; 
             border: none; 
             border-radius: 15px; 
             cursor: pointer; 
             font-weight: bold; 
-            margin-top: 20px;
+            margin-top: 15px;
             width: 100%;
             max-width: 400px;
         }
@@ -39,9 +39,12 @@
             box-shadow: none !important; 
         }
         
-        .btn-start { background-color: #00bcd4; box-shadow: 0 5px 0 #00838f; }
+        .btn-start { background-color: #00bcd4; box-shadow: 0 5px 0 #00838f; padding: 25px; font-size: 28px; }
+        .btn-menu-item { background-color: #ffffff; color: #00838f; border: 2px solid #00bcd4; box-shadow: 0 4px 0 #b2ebf2; padding: 15px; font-size: 20px; }
+        
         .btn-go { background-color: #ff9800; box-shadow: 0 5px 0 #e65100; display: none; font-size: 36px; }
         .btn-next { background-color: #4caf50; box-shadow: 0 5px 0 #2e7d32; display: none; }
+        .btn-skip { background-color: #9e9e9e; box-shadow: 0 5px 0 #757575; margin-top: 10px; font-size: 20px; }
         
         #routineArea, #endScreen { display: none; }
         #exerciseTitle { font-size: 36px; color: #ff6f00; margin-bottom: 20px; min-height: 50px; }
@@ -70,16 +73,29 @@
             width: 0%;
             transition: width 0.3s;
         }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <h1>👅 Myo-Therapy Routine</h1>
+    <h1>👅 Myo-Therapy</h1>
 
     <div id="startScreen" class="card">
         <h2>Ready for your exercises?</h2>
-        <p style="font-size: 20px; color: #666;">Turn your volume up!</p>
-        <button class="btn-start" onclick="startRoutine()">▶️ Start Routine</button>
+        <p style="font-size: 20px; color: #666; margin-bottom: 25px;">Turn your volume up!</p>
+        <button class="btn-start" onclick="startRoutine(0)">▶️ Start Full Routine</button>
+        
+        <hr style="margin: 30px 0; border: 1px solid #e0f7fa;">
+        <h3 style="color: #00838f;">Or jump to an exercise:</h3>
+        <div id="menuGrid" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+            </div>
     </div>
 
     <div id="routineArea" class="card">
@@ -89,19 +105,24 @@
         <div id="audioStatus">🔊 Listen to instructions...</div>
         <div id="timerDisplay">00:00</div>
         
-        <button id="goBtn" class="btn-go" onclick="startAction()">🟢 GO!</button>
-        <button id="nextBtn" class="btn-next" onclick="nextExercise()">Next Exercise ➡️</button>
+        <div class="button-group">
+            <button id="goBtn" class="btn-go" onclick="startAction()">🟢 GO!</button>
+            <button id="nextBtn" class="btn-next" onclick="nextExercise()">Next Exercise ➡️</button>
+            <button id="skipBtn" class="btn-skip" onclick="skipExercise()">⏭️ Skip / Exit Early</button>
+        </div>
         
         <div class="progress-bar">
             <div id="progressFill" class="progress-fill"></div>
         </div>
         <p id="stepCounter" style="color: #888; margin-top: 10px;">Step 1 of 9</p>
+        
+        <button style="background: none; color: #00bcd4; box-shadow: none; font-size: 16px; margin-top: 20px;" onclick="location.reload()">🏠 Back to Menu</button>
     </div>
 
     <div id="endScreen" class="card">
         <h1 style="font-size: 50px;">🎉 All Done! 🎉</h1>
         <h2>Great job completing your therapy!</h2>
-        <button class="btn-start" onclick="location.reload()">🔄 Restart</button>
+        <button class="btn-start" onclick="location.reload()">🔄 Back to Menu</button>
     </div>
 
     <script>
@@ -110,62 +131,62 @@
             {
                 title: "Toothbrush / Foam Brush",
                 instruction: "Rub your tip of tongue, rub your spot palate with the foam brush, place tongue tip on spot, close your teeth and lips and breathe through your nose 3 times.",
-                audio: "audio/01_toothbrush.mp3.wav",
+                audio: "audio/01_toothbrush.mp3",
                 type: "manual"
             },
             {
                 title: "Parents Delight / Lip Stick",
-                instruction: "Place parent's delight or a stick between your lips (not your teeth), relax your lips and practice breathing thru your nose for 5 min.",
-                audio: "audio/02_parents_delight.mp3.wav",
+                instruction: "Get ready for Parent's Delight. Put on your lip stick, close your lips gently, and hold this perfect posture for 5 minutes.",
+                audio: "audio/02_parents_delight.mp3",
                 type: "timer",
-                timeInSeconds: 300 // 5 minutes
+                timeInSeconds: 300
             },
             {
                 title: "Slow Clicks",
-                instruction: "Click your tongue slowly, then suction the tongue to the palate and hold for 2 minutes.",
-                audio: "audio/03_slow_clicks.mp3.wav",
+                instruction: "Time for slow clicks. Suction your tongue completely to the roof of your mouth, open wide, and click. Do this slowly for 2 minutes.",
+                audio: "audio/03_slow_clicks.mp3",
                 type: "timer",
-                timeInSeconds: 120 // 2 minutes
+                timeInSeconds: 120
             },
             {
                 title: "The Tiny Oyster",
-                instruction: "Hold a palatal suction, slowly open and close your mouth, touching your back molars together. 10x",
-                audio: "audio/04_tiny_oyster.mp3.wav",
+                instruction: "Get ready for The Tiny Oyster. Hold that tongue tight!",
+                audio: "audio/04_tiny_oyster.mp3",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "Fat Tongue / Skinny Tongue",
-                instruction: "Puppy dog tongue, then lizard.  Side swipes and the 3 taps down the middle of tongue first to prep tongue. 10X.",
-                audio: "audio/05_fat_tongue.mp3.wav",
+                instruction: "Let's do Fat Tongue, Skinny Tongue. Stretch it out wide, then make it pointy.",
+                audio: "audio/05_fat_tongue.mp3",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "K & G Sounds",
-                instruction: "Kah. Gah. 10X",
-                audio: "audio/06_kg_sounds.mp3.wav",
+                instruction: "Time for K and G sounds. Keep your tongue tip down and use the back of your tongue. Kah. Gah.",
+                audio: "audio/06_kg_sounds.mp3",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "Elastic Hold",
-                instruction: "Place the elastic on your tongue tip, find your spot, and swallow. We will hold this for 15 minutes.",
-                audio: "audio/07_elastic_hold.mp3.wav",
+                instruction: "Time for the elastic hold. Place the elastic on your tongue tip, find your spot, and swallow. We will hold this for 15 minutes.",
+                audio: "audio/07_elastic_hold.mp3",
                 type: "timer",
-                timeInSeconds: 900 // 15 minutes
+                timeInSeconds: 900
             },
             {
                 title: "The Shrimp's Walk",
-                instruction: "Start with tongue tip on spot, trace your palate back and forth.  10X",
-                audio: "audio/08_shrimps_walk.mp3.wav",
+                instruction: "Get ready for The Shrimp's Walk. Let's do this perfectly.",
+                audio: "audio/08_shrimps_walk.mp3",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "Tongue Points",
-                instruction: "Point tongue and touch coners of lips without moving your jaw.",
-                audio: "audio/09_tongue_points.mp3.wav",
+                instruction: "Last exercise! Tongue points. Make your tongue as sharp and pointy as you can.",
+                audio: "audio/09_tongue_points.mp3",
                 type: "manual"
             }
         ];
@@ -175,14 +196,21 @@
         let currentAudioPlayer = null;
         let preferredVoice = null;
 
-        // Load the iPad's voice for the countdown
+        // Build the dynamic menu on load
+        window.onload = function() {
+            let menuGrid = document.getElementById('menuGrid');
+            routine.forEach((ex, index) => {
+                let btn = document.createElement('button');
+                btn.className = 'btn-menu-item';
+                btn.innerText = `${index + 1}. ${ex.title}`;
+                btn.onclick = () => startRoutine(index);
+                menuGrid.appendChild(btn);
+            });
+        };
+
         function loadVoices() {
             let voices = window.speechSynthesis.getVoices();
-            preferredVoice = 
-                voices.find(v => v.name.includes("Google US English")) ||
-                voices.find(v => v.name.includes("Samantha")) || 
-                voices.find(v => v.name.includes("Alex")) ||
-                voices[0];
+            preferredVoice = voices.find(v => v.name.includes("Google US English")) || voices.find(v => v.name.includes("Samantha")) || voices[0];
         }
 
         if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -191,25 +219,17 @@
             loadVoices();
         }
 
-        // iPad text-to-speech function for the numbers
-        function speakCountdown(text, rate = 0.8, onEndCallback = null) {
+        // Fire-and-forget speech function (fixes iOS freezing)
+        function speakCountdown(text) {
             window.speechSynthesis.cancel();
             let utterance = new SpeechSynthesisUtterance(text);
             if (preferredVoice) utterance.voice = preferredVoice;
-            utterance.rate = rate; 
-            
-            if (onEndCallback) {
-                utterance.onend = onEndCallback;
-            }
+            utterance.rate = 0.8; 
             window.speechSynthesis.speak(utterance);
         }
 
-        // Play the Google Studio MP3 instructions
         function playAudio(filename, onEndCallback) {
-            if (currentAudioPlayer) {
-                currentAudioPlayer.pause();
-                currentAudioPlayer.currentTime = 0;
-            }
+            stopMedia();
             currentAudioPlayer = new Audio(filename);
             
             if (onEndCallback) {
@@ -217,28 +237,38 @@
             }
             
             currentAudioPlayer.play().catch(e => {
-                console.error("Could not play audio. Check if file exists:", filename);
-                if (onEndCallback) setTimeout(onEndCallback, 2000); 
+                console.error("Could not play audio:", filename);
+                if (onEndCallback) setTimeout(onEndCallback, 1500); 
             });
         }
 
-        function startRoutine() {
+        function stopMedia() {
+            clearInterval(timerInterval);
+            if (currentAudioPlayer) {
+                currentAudioPlayer.pause();
+                currentAudioPlayer.currentTime = 0;
+            }
+            window.speechSynthesis.cancel();
+        }
+
+        function startRoutine(startIndex) {
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('routineArea').style.display = 'block';
             
-            // iPad TTS unlock hack
+            // iOS audio unlock
             let dummy = new SpeechSynthesisUtterance("");
             dummy.volume = 0;
             window.speechSynthesis.speak(dummy);
 
-            currentIndex = 0;
+            currentIndex = startIndex;
             loadExercise();
         }
 
         function loadExercise() {
-            clearInterval(timerInterval);
+            stopMedia();
             document.getElementById('goBtn').style.display = 'none';
             document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'block';
             document.getElementById('timerDisplay').style.display = 'none';
             document.getElementById('audioStatus').style.display = 'block';
             
@@ -251,10 +281,8 @@
             let progressPct = ((currentIndex) / routine.length) * 100;
             document.getElementById('progressFill').style.width = progressPct + '%';
 
-            // Play MP3, then show either GO or NEXT
             playAudio(current.audio, () => {
                 document.getElementById('audioStatus').style.display = 'none';
-                
                 if (current.type === "manual") {
                     document.getElementById('nextBtn').style.display = 'block';
                 } else {
@@ -263,7 +291,6 @@
             });
         }
 
-        // Triggered when she taps the GO button
         function startAction() {
             document.getElementById('goBtn').style.display = 'none';
             let current = routine[currentIndex];
@@ -272,7 +299,7 @@
                 startVisualTimer(current.timeInSeconds);
             } 
             else if (current.type === "countdown") {
-                startSpokenCountdown(current.timeInSeconds);
+                startRobustCountdown(current.timeInSeconds);
             }
         }
 
@@ -302,34 +329,35 @@
                 (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
         }
 
-        function startSpokenCountdown(startNum) {
+        // New iOS-safe robust countdown using standard javascript timing
+        function startRobustCountdown(startNum) {
             let timerEl = document.getElementById('timerDisplay');
             timerEl.style.display = 'block';
-            timerEl.innerText = startNum;
             
             let currentNum = startNum;
-            
-            function countNext() {
+            timerEl.innerText = currentNum;
+            speakCountdown(currentNum.toString());
+
+            timerInterval = setInterval(() => {
+                currentNum--;
                 if (currentNum > 0) {
                     timerEl.innerText = currentNum;
-                    speakCountdown(currentNum.toString(), 0.8, () => {
-                        currentNum--;
-                        setTimeout(countNext, 600); // Small pause for rhythm
-                    });
+                    speakCountdown(currentNum.toString());
                 } else {
+                    clearInterval(timerInterval);
                     timerEl.innerText = "0";
-                    playAudio("audio/timer_done.mp3"); // Play the "Time is up!" file
+                    playAudio("audio/timer_done.mp3"); 
                     document.getElementById('nextBtn').style.display = 'block';
                 }
-            }
-            
-            countNext();
+            }, 1200); // Wait 1.2 seconds between numbers to ensure clear speech pacing
+        }
+
+        function skipExercise() {
+            nextExercise();
         }
 
         function nextExercise() {
-            if (currentAudioPlayer) currentAudioPlayer.pause();
-            window.speechSynthesis.cancel();
-            
+            stopMedia();
             currentIndex++;
             if (currentIndex >= routine.length) {
                 document.getElementById('routineArea').style.display = 'none';
