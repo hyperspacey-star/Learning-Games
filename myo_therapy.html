@@ -85,6 +85,8 @@
 </head>
 <body>
 
+    <audio id="masterAudioPlayer" playsinline></audio>
+
     <h1>👅 Myo-Therapy</h1>
 
     <div id="startScreen" class="card">
@@ -126,77 +128,78 @@
     </div>
 
     <script>
-        // The Routine Database
+        // Updated to explicitly match the .mp3.wav extensions you mentioned
         const routine = [
             {
                 title: "Toothbrush / Foam Brush",
                 instruction: "Rub your tip of tongue, rub your spot palate with the foam brush, place tongue tip on spot, close your teeth and lips and breathe through your nose 3 times.",
-                audio: "01_toothbrush.mp3.wav",
+                audio: "audio/01_toothbrush.mp3.wav",
                 type: "manual"
             },
             {
                 title: "Parents Delight / Lip Stick",
                 instruction: "Get ready for Parent's Delight. Put on your lip stick, close your lips gently, and hold this perfect posture for 5 minutes.",
-                audio: "02_parents_delight.mp3.wav",
+                audio: "audio/02_parents_delight.mp3.wav",
                 type: "timer",
                 timeInSeconds: 300
             },
             {
                 title: "Slow Clicks",
                 instruction: "Time for slow clicks. Suction your tongue completely to the roof of your mouth, open wide, and click. Do this slowly for 2 minutes.",
-                audio: "03_slow_clicks.mp3.wav",
+                audio: "audio/03_slow_clicks.mp3.wav",
                 type: "timer",
                 timeInSeconds: 120
             },
             {
                 title: "The Tiny Oyster",
                 instruction: "Get ready for The Tiny Oyster. Hold that tongue tight!",
-                audio: "04_tiny_oyster.mp3.wav",
+                audio: "audio/04_tiny_oyster.mp3.wav",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "Fat Tongue / Skinny Tongue",
                 instruction: "Let's do Fat Tongue, Skinny Tongue. Stretch it out wide, then make it pointy.",
-                audio: "05_fat_tongue.mp3.wav",
+                audio: "audio/05_fat_tongue.mp3.wav",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "K & G Sounds",
                 instruction: "Time for K and G sounds. Keep your tongue tip down and use the back of your tongue. Kah. Gah.",
-                audio: "06_kg_sounds.mp3.wav",
+                audio: "audio/06_kg_sounds.mp3.wav",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "Elastic Hold",
                 instruction: "Time for the elastic hold. Place the elastic on your tongue tip, find your spot, and swallow. We will hold this for 15 minutes.",
-                audio: "07_elastic_hold.mp3.wav",
+                audio: "audio/07_elastic_hold.mp3.wav",
                 type: "timer",
                 timeInSeconds: 900
             },
             {
                 title: "The Shrimp's Walk",
                 instruction: "Get ready for The Shrimp's Walk. Let's do this perfectly.",
-                audio: "08_shrimps_walk.mp3.wav",
+                audio: "audio/08_shrimps_walk.mp3.wav",
                 type: "countdown",
                 timeInSeconds: 10
             },
             {
                 title: "Tongue Points",
                 instruction: "Last exercise! Tongue points. Make your tongue as sharp and pointy as you can.",
-                audio: "09_tongue_points.mp3.wav",
+                audio: "audio/09_tongue_points.mp3.wav",
                 type: "manual"
             }
         ];
 
         let currentIndex = 0;
         let timerInterval;
-        let currentAudioPlayer = null;
         let preferredVoice = null;
+        
+        // Grab the physical HTML audio player we added at the top of the body
+        const masterAudio = document.getElementById('masterAudioPlayer');
 
-        // Build the dynamic menu on load
         window.onload = function() {
             let menuGrid = document.getElementById('menuGrid');
             routine.forEach((ex, index) => {
@@ -219,7 +222,6 @@
             loadVoices();
         }
 
-        // Fire-and-forget speech function (fixes iOS freezing)
         function speakCountdown(text) {
             window.speechSynthesis.cancel();
             let utterance = new SpeechSynthesisUtterance(text);
@@ -230,24 +232,27 @@
 
         function playAudio(filename, onEndCallback) {
             stopMedia();
-            currentAudioPlayer = new Audio(filename);
             
+            // Tell the master player to load the new file
+            masterAudio.src = filename;
+            
+            // Clear any old end-callbacks so they don't fire at the wrong time
+            masterAudio.onended = null;
             if (onEndCallback) {
-                currentAudioPlayer.onended = onEndCallback;
+                masterAudio.onended = onEndCallback;
             }
             
-            currentAudioPlayer.play().catch(e => {
-                console.error("Could not play audio:", filename);
+            masterAudio.play().catch(e => {
+                console.error("Could not play audio. Check exact spelling in GitHub folder:", filename, e);
+                // If audio fails, pretend it played and move on after 1.5 seconds so the app doesn't break
                 if (onEndCallback) setTimeout(onEndCallback, 1500); 
             });
         }
 
         function stopMedia() {
             clearInterval(timerInterval);
-            if (currentAudioPlayer) {
-                currentAudioPlayer.pause();
-                currentAudioPlayer.currentTime = 0;
-            }
+            masterAudio.pause();
+            masterAudio.currentTime = 0;
             window.speechSynthesis.cancel();
         }
 
@@ -255,10 +260,14 @@
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('routineArea').style.display = 'block';
             
-            // iOS audio unlock
+            // UNLOCK iOS AUDIO HACK: Play something tiny immediately on the user's tap
             let dummy = new SpeechSynthesisUtterance("");
             dummy.volume = 0;
             window.speechSynthesis.speak(dummy);
+            
+            // Bless the master audio player
+            masterAudio.play().catch(e => {});
+            masterAudio.pause();
 
             currentIndex = startIndex;
             loadExercise();
@@ -316,7 +325,7 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    playAudio("audio/timer_done.mp3");
+                    playAudio("audio/timer_done.mp3.wav");
                     document.getElementById('nextBtn').style.display = 'block';
                 }
             }, 1000);
@@ -329,7 +338,6 @@
                 (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
         }
 
-        // New iOS-safe robust countdown using standard javascript timing
         function startRobustCountdown(startNum) {
             let timerEl = document.getElementById('timerDisplay');
             timerEl.style.display = 'block';
@@ -346,10 +354,10 @@
                 } else {
                     clearInterval(timerInterval);
                     timerEl.innerText = "0";
-                    playAudio("audio/timer_done.mp3"); 
+                    playAudio("audio/timer_done.mp3.wav"); 
                     document.getElementById('nextBtn').style.display = 'block';
                 }
-            }, 1200); // Wait 1.2 seconds between numbers to ensure clear speech pacing
+            }, 1200);
         }
 
         function skipExercise() {
@@ -362,7 +370,7 @@
             if (currentIndex >= routine.length) {
                 document.getElementById('routineArea').style.display = 'none';
                 document.getElementById('endScreen').style.display = 'block';
-                playAudio("audio/all_done.mp3");
+                playAudio("audio/all_done.mp3.wav");
             } else {
                 loadExercise();
             }
