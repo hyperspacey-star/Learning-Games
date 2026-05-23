@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Myo-Therapy Routine</title>
+    <title>Myo-Therapy Routine Premium</title>
     <style>
         body { 
             font-family: 'Comic Sans MS', Arial, sans-serif; 
@@ -41,14 +41,38 @@
         
         .btn-start { background-color: #00bcd4; box-shadow: 0 5px 0 #00838f; padding: 25px; font-size: 28px; }
         .btn-menu-item { background-color: #ffffff; color: #00838f; border: 2px solid #00bcd4; box-shadow: 0 4px 0 #b2ebf2; padding: 15px; font-size: 20px; }
+        .btn-report { background-color: #673ab7; box-shadow: 0 5px 0 #4527a0; font-size: 22px; margin-top: 20px;}
         
         .btn-go { background-color: #ff9800; box-shadow: 0 5px 0 #e65100; display: none; font-size: 36px; }
         .btn-next { background-color: #4caf50; box-shadow: 0 5px 0 #2e7d32; display: none; }
         .btn-skip { background-color: #9e9e9e; box-shadow: 0 5px 0 #757575; margin-top: 10px; font-size: 20px; }
         
-        #routineArea, #endScreen { display: none; }
+        #routineArea, #endScreen, #reportCardScreen { display: none; }
         #exerciseTitle { font-size: 36px; color: #ff6f00; margin-bottom: 20px; min-height: 50px; }
-        #instructionText { font-size: 24px; color: #555; margin-bottom: 30px; min-height: 80px; }
+        #instructionText { font-size: 24px; color: #555; margin-bottom: 15px; min-height: 80px; }
+        
+        #visualGuide {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none; 
+            max-height: 250px;
+            object-fit: cover;
+        }
+
+        .streak-container {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border: 2px solid #ffe0b2;
+        }
         
         #timerDisplay { font-size: 80px; font-weight: bold; color: #d32f2f; margin: 20px 0; font-family: monospace; display: none; }
         #audioStatus { font-size: 20px; color: #00838f; font-weight: bold; margin: 20px 0; display: none; animation: pulse 1.5s infinite; }
@@ -90,9 +114,11 @@
     <h1>👅 Myo-Therapy</h1>
 
     <div id="startScreen" class="card">
+        <div id="homeStreakDisplay" class="streak-container">🔥 0 Day Streak!</div>
         <h2>Ready for your exercises?</h2>
-        <p style="font-size: 20px; color: #666; margin-bottom: 25px;">Turn your volume up!</p>
         <button class="btn-start" onclick="startRoutine(0)">▶️ Start Full Routine</button>
+        
+        <button class="btn-report" onclick="showReportCard()">📊 View Report Card</button>
         
         <hr style="margin: 30px 0; border: 1px solid #e0f7fa;">
         <h3 style="color: #00838f;">Or jump to an exercise:</h3>
@@ -100,8 +126,19 @@
             </div>
     </div>
 
+    <div id="reportCardScreen" class="card">
+        <h2 style="color: #673ab7; font-size: 32px;">📊 Practice Log</h2>
+        <p style="color: #666;">Here is a record of completed sessions.</p>
+        
+        <div id="reportLogArea" style="max-height: 400px; overflow-y: auto; border: 2px solid #eee; border-radius: 10px; padding: 10px;">
+            </div>
+
+        <button class="btn-start" style="margin-top: 20px;" onclick="closeReportCard()">⬅️ Back to Menu</button>
+    </div>
+
     <div id="routineArea" class="card">
         <h2 id="exerciseTitle">Exercise Title</h2>
+        <img id="visualGuide" src="" alt="Exercise visual guide">
         <div id="instructionText">Instructions will appear here.</div>
         
         <div id="audioStatus">🔊 Listen to instructions...</div>
@@ -123,23 +160,27 @@
 
     <div id="endScreen" class="card">
         <h1 style="font-size: 50px;">🎉 All Done! 🎉</h1>
+        <div id="finalStreakDisplay" class="streak-container" style="margin-top:10px;">🔥 1 Day Streak!</div>
         <h2>Great job completing your therapy!</h2>
+        
+        <button class="btn-report" onclick="showReportCard()">📊 View Report Card</button>
         <button class="btn-start" onclick="location.reload()">🔄 Back to Menu</button>
     </div>
 
     <script>
-        // Updated to explicitly match the .mp3.wav extensions you mentioned
         const routine = [
             {
                 title: "Toothbrush / Foam Brush",
-                instruction: "Rub your tip of tongue, rub your spot palate with the foam brush, place tongue tip on spot, close your teeth and lips and breathe through your nose 3 times.",
+                instruction: "Rub your tip of tongue, rub your spot palate with the foam brush - place tongue tip on spot, close your teeth and lips and breathe through your nose 3 times before bed.",
                 audio: "audio/01_toothbrush.mp3.wav",
+                gif: "images/01_toothbrush.gif",
                 type: "manual"
             },
             {
                 title: "Parents Delight / Lip Stick",
                 instruction: "Get ready for Parent's Delight. Put on your lip stick, close your lips gently, and hold this perfect posture for 5 minutes.",
                 audio: "audio/02_parents_delight.mp3.wav",
+                gif: "images/02_parents_delight.gif",
                 type: "timer",
                 timeInSeconds: 300
             },
@@ -147,6 +188,7 @@
                 title: "Slow Clicks",
                 instruction: "Time for slow clicks. Suction your tongue completely to the roof of your mouth, open wide, and click. Do this slowly for 2 minutes.",
                 audio: "audio/03_slow_clicks.mp3.wav",
+                gif: "", 
                 type: "timer",
                 timeInSeconds: 120
             },
@@ -154,6 +196,7 @@
                 title: "The Tiny Oyster",
                 instruction: "Get ready for The Tiny Oyster. Hold that tongue tight!",
                 audio: "audio/04_tiny_oyster.mp3.wav",
+                gif: "",
                 type: "countdown",
                 timeInSeconds: 10
             },
@@ -161,6 +204,7 @@
                 title: "Fat Tongue / Skinny Tongue",
                 instruction: "Let's do Fat Tongue, Skinny Tongue. Stretch it out wide, then make it pointy.",
                 audio: "audio/05_fat_tongue.mp3.wav",
+                gif: "",
                 type: "countdown",
                 timeInSeconds: 10
             },
@@ -168,6 +212,7 @@
                 title: "K & G Sounds",
                 instruction: "Time for K and G sounds. Keep your tongue tip down and use the back of your tongue. Kah. Gah.",
                 audio: "audio/06_kg_sounds.mp3.wav",
+                gif: "",
                 type: "countdown",
                 timeInSeconds: 10
             },
@@ -175,6 +220,7 @@
                 title: "Elastic Hold",
                 instruction: "Time for the elastic hold. Place the elastic on your tongue tip, find your spot, and swallow. We will hold this for 15 minutes.",
                 audio: "audio/07_elastic_hold.mp3.wav",
+                gif: "",
                 type: "timer",
                 timeInSeconds: 900
             },
@@ -182,6 +228,7 @@
                 title: "The Shrimp's Walk",
                 instruction: "Get ready for The Shrimp's Walk. Let's do this perfectly.",
                 audio: "audio/08_shrimps_walk.mp3.wav",
+                gif: "",
                 type: "countdown",
                 timeInSeconds: 10
             },
@@ -189,6 +236,7 @@
                 title: "Tongue Points",
                 instruction: "Last exercise! Tongue points. Make your tongue as sharp and pointy as you can.",
                 audio: "audio/09_tongue_points.mp3.wav",
+                gif: "",
                 type: "manual"
             }
         ];
@@ -196,11 +244,41 @@
         let currentIndex = 0;
         let timerInterval;
         let preferredVoice = null;
+        let currentStreak = 0;
         
-        // Grab the physical HTML audio player we added at the top of the body
         const masterAudio = document.getElementById('masterAudioPlayer');
 
+        // Gamification: Load Streak Data
+        function calculateStreak() {
+            let lastDateStr = localStorage.getItem('myoLastDate');
+            currentStreak = parseInt(localStorage.getItem('myoStreak') || '0');
+            
+            if (lastDateStr) {
+                let lastDate = new Date(lastDateStr);
+                let today = new Date();
+                
+                lastDate.setHours(0,0,0,0);
+                today.setHours(0,0,0,0);
+                
+                let diffTime = today - lastDate;
+                let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 1) {
+                    currentStreak = 0;
+                    localStorage.setItem('myoStreak', '0');
+                }
+            }
+            
+            document.getElementById('homeStreakDisplay').innerText = `🔥 ${currentStreak} Day Streak!`;
+            
+            if (currentStreak === 0) {
+                document.getElementById('homeStreakDisplay').style.display = 'none';
+            }
+        }
+
         window.onload = function() {
+            calculateStreak(); 
+            
             let menuGrid = document.getElementById('menuGrid');
             routine.forEach((ex, index) => {
                 let btn = document.createElement('button');
@@ -232,19 +310,14 @@
 
         function playAudio(filename, onEndCallback) {
             stopMedia();
-            
-            // Tell the master player to load the new file
             masterAudio.src = filename;
-            
-            // Clear any old end-callbacks so they don't fire at the wrong time
             masterAudio.onended = null;
             if (onEndCallback) {
                 masterAudio.onended = onEndCallback;
             }
             
             masterAudio.play().catch(e => {
-                console.error("Could not play audio. Check exact spelling in GitHub folder:", filename, e);
-                // If audio fails, pretend it played and move on after 1.5 seconds so the app doesn't break
+                console.error("Audio block:", filename, e);
                 if (onEndCallback) setTimeout(onEndCallback, 1500); 
             });
         }
@@ -258,14 +331,13 @@
 
         function startRoutine(startIndex) {
             document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('reportCardScreen').style.display = 'none';
             document.getElementById('routineArea').style.display = 'block';
             
-            // UNLOCK iOS AUDIO HACK: Play something tiny immediately on the user's tap
             let dummy = new SpeechSynthesisUtterance("");
             dummy.volume = 0;
             window.speechSynthesis.speak(dummy);
             
-            // Bless the master audio player
             masterAudio.play().catch(e => {});
             masterAudio.pause();
 
@@ -286,6 +358,14 @@
             document.getElementById('exerciseTitle').innerText = current.title;
             document.getElementById('instructionText').innerText = current.instruction;
             document.getElementById('stepCounter').innerText = `Step ${currentIndex + 1} of ${routine.length}`;
+            
+            let visualGuide = document.getElementById('visualGuide');
+            if (current.gif && current.gif !== "") {
+                visualGuide.src = current.gif;
+                visualGuide.style.display = 'inline-block';
+            } else {
+                visualGuide.style.display = 'none';
+            }
             
             let progressPct = ((currentIndex) / routine.length) * 100;
             document.getElementById('progressFill').style.width = progressPct + '%';
@@ -368,12 +448,73 @@
             stopMedia();
             currentIndex++;
             if (currentIndex >= routine.length) {
-                document.getElementById('routineArea').style.display = 'none';
-                document.getElementById('endScreen').style.display = 'block';
-                playAudio("audio/all_done.mp3.wav");
+                completeRoutine();
             } else {
                 loadExercise();
             }
+        }
+
+        // Updated Gamification: Streak + Report Log Update
+        function completeRoutine() {
+            document.getElementById('routineArea').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+            playAudio("audio/all_done.mp3.wav");
+            
+            let lastDateStr = localStorage.getItem('myoLastDate');
+            let today = new Date();
+            let todayStr = today.toDateString();
+            
+            if (lastDateStr !== todayStr) {
+                currentStreak++;
+                localStorage.setItem('myoStreak', currentStreak.toString());
+                localStorage.setItem('myoLastDate', todayStr);
+                
+                // Add to internal Report Card Log
+                let log = JSON.parse(localStorage.getItem('myoLog') || '[]');
+                log.push({
+                    date: today.toLocaleDateString(),
+                    time: today.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                });
+                
+                // Keep the last 30 entries so memory doesn't fill up over time
+                if (log.length > 30) log.shift();
+                localStorage.setItem('myoLog', JSON.stringify(log));
+            }
+            
+            document.getElementById('finalStreakDisplay').innerText = `🔥 ${currentStreak} Day Streak!`;
+        }
+
+        // Parent Dashboard Functions
+        function showReportCard() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('reportCardScreen').style.display = 'block';
+            
+            let log = JSON.parse(localStorage.getItem('myoLog') || '[]');
+            let logArea = document.getElementById('reportLogArea');
+            
+            if (log.length === 0) {
+                logArea.innerHTML = "<p style='font-size:20px; color:#888;'>No sessions recorded yet. Time to get practicing!</p>";
+                return;
+            }
+            
+            // Build a nice visual table (reversed so newest is at top)
+            let reversedLog = [...log].reverse();
+            let tableHTML = '<table style="width:100%; border-collapse: collapse; text-align: left; font-size: 20px;">';
+            tableHTML += '<tr style="background-color:#673ab7; color:white;"><th style="padding:15px; border-radius:10px 0 0 0;">Date</th><th style="padding:15px; border-radius:0 10px 0 0;">Time</th></tr>';
+            
+            reversedLog.forEach((entry, i) => {
+                let bg = i % 2 === 0 ? '#ede7f6' : '#ffffff';
+                tableHTML += `<tr style="background-color:${bg};"><td style="padding:15px; border-bottom:1px solid #d1c4e9;">🗓️ ${entry.date}</td><td style="padding:15px; border-bottom:1px solid #d1c4e9;">⏰ ${entry.time}</td></tr>`;
+            });
+            
+            tableHTML += '</table>';
+            logArea.innerHTML = tableHTML;
+        }
+
+        function closeReportCard() {
+            document.getElementById('reportCardScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
         }
     </script>
 </body>
