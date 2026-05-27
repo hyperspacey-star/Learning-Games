@@ -74,11 +74,10 @@
         let firstMistakeIndex = -1;
         const maxMistakes = 6;
         
-        // Single Audio Player Fix
         let currentAudio = new Audio();
         currentAudio.onerror = function() { alert("🚨 FILE NOT FOUND 🚨\n\nLooking for:\n" + currentAudio.src); };
 
-        let audioCtx; // For the synth sounds (buzz, ding, fart)
+        let audioCtx; 
 
         function startGame() {
             currentQueue = [...initialWords];
@@ -96,9 +95,18 @@
             loadWord();
         }
 
+        // --- THE FIX: Auto-skip any spaces in the word ---
+        function skipSpaces() {
+            while (currentLetterIndex < currentWord.length && currentWord[currentLetterIndex] === ' ') {
+                currentLetterIndex++;
+            }
+        }
+
         function loadWord() {
             currentWord = currentQueue[currentWordIndex].toUpperCase();
             currentLetterIndex = 0;
+            skipSpaces(); // Jump over a space if the word starts with one
+            
             mistakes = 0;
             mistakesOnCurrentLetter = 0;
             wordFailedThisRound = false;
@@ -115,12 +123,10 @@
         }
 
         function playAudio() {
-            // Plays the specific .wav file
             currentAudio.src = 'audio/' + currentWord.toLowerCase() + '.wav';
             currentAudio.play().catch(e => alert("Audio blocked. Try tapping again!"));
         }
         
-        // Internal Synth Sounds
         function playTone(type, freq, dur) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             let osc = audioCtx.createOscillator();
@@ -185,12 +191,17 @@
         function updateWordDisplay() {
             let displayString = "";
             for (let i = 0; i < currentWord.length; i++) {
-                if (i < currentLetterIndex) { displayString += currentWord[i] + " "; } 
-                else { displayString += "_ "; }
+                // If it's a space, insert a large visual gap
+                if (currentWord[i] === ' ') {
+                    displayString += "\u00A0\u00A0\u00A0"; 
+                } else {
+                    if (i < currentLetterIndex) { displayString += currentWord[i] + " "; } 
+                    else { displayString += "_ "; }
+                }
             }
             document.getElementById('wordDisplay').innerText = displayString.trim();
 
-            if (currentLetterIndex === currentWord.length) {
+            if (currentLetterIndex >= currentWord.length) {
                 document.getElementById('message').innerText = wordFailedThisRound ? "We'll practice this one again later!" : "✅ Perfect!";
                 document.getElementById('message').style.color = wordFailedThisRound ? "#f57f17" : "#4caf50";
                 document.getElementById('keyboard').style.pointerEvents = "none";
@@ -210,7 +221,15 @@
                 document.getElementById('message').style.color = "#f44336";
                 document.getElementById('clueDisplay').innerText = ""; 
                 document.getElementById('keyboard').style.pointerEvents = "none";
-                document.getElementById('wordDisplay').innerText = currentWord.split('').join(' ');
+                
+                // Show the full word (maintaining the spaces)
+                let revealedWord = "";
+                for(let char of currentWord) {
+                    if(char === ' ') revealedWord += "\u00A0\u00A0\u00A0";
+                    else revealedWord += char + " ";
+                }
+                document.getElementById('wordDisplay').innerText = revealedWord.trim();
+                
                 document.getElementById('nextBtn').style.display = 'block';
                 playFartSound();
             }
@@ -227,6 +246,8 @@
                 setTimeout(() => { btnElement.classList.remove('flash-correct'); }, 300);
                 
                 currentLetterIndex++;
+                skipSpaces(); // Jump over the space immediately!
+                
                 mistakesOnCurrentLetter = 0; 
                 document.getElementById('clueDisplay').innerText = ""; 
                 updateWordDisplay();
