@@ -19,14 +19,14 @@ export default async function handler(req, res) {
     // ACTION 1: DICTATE THE WORD (No spoilers this time!)
     // ---------------------------------------------------------
     if (action === 'dictate') {
-      // Say the word, pause, and repeat it naturally.
-      const spokenPrompt = `The word is... ${word}. ... ${word}.`;
+      // Use conversational filler to force a natural pause
+      const spokenPrompt = `The word is: ${word}. I repeat... ${word}.`;
 
       const mp3 = await openai.audio.speech.create({
         model: "tts-1",
         voice: "nova", 
         input: spokenPrompt, 
-        speed: 0.9 // Just slightly slowed for clarity, no robotic distortion
+        speed: 0.9 
       });
       const buffer = Buffer.from(await mp3.arrayBuffer());
       return res.status(200).json({ audio: buffer.toString('base64') });
