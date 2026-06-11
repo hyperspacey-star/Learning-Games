@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     // ---------------------------------------------------------
     if (action === 'dictate') {
       // Use conversational filler to force a natural pause
-      const spokenPrompt = `The word is: ${word}. I repeat... ${word}.`;
+      const spokenPrompt = `${word}.`;
 
       const mp3 = await openai.audio.speech.create({
         model: "tts-1",
