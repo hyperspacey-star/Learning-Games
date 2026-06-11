@@ -1,12 +1,10 @@
 import OpenAI from 'openai';
 
-// This securely loads your API key from the Environment Variables you added in Vercel
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req, res) {
-  // Allow requests from your game
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,23 +16,23 @@ export default async function handler(req, res) {
 
   try {
     // ---------------------------------------------------------
-    // ACTION 1: DICTATE THE WORD (AI Voice for the spelling word)
+    // ACTION 1: DICTATE THE WORD
     // ---------------------------------------------------------
     if (action === 'dictate') {
       const mp3 = await openai.audio.speech.create({
         model: "tts-1",
-        voice: "shimmer",
+        voice: "nova", // Changed to a warmer, more natural voice
         input: word,
+        speed: 0.75 // SLOWED DOWN for spelling dictation!
       });
       const buffer = Buffer.from(await mp3.arrayBuffer());
       return res.status(200).json({ audio: buffer.toString('base64') });
     }
 
     // ---------------------------------------------------------
-    // ACTION 2: MISS AI TUTOR HINT (Phonics-based clue)
+    // ACTION 2: MISS AI TUTOR HINT
     // ---------------------------------------------------------
     if (action === 'hint') {
-      // 1. Ask GPT-4o-mini to analyze the mistake
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -52,11 +50,11 @@ export default async function handler(req, res) {
 
       const hintText = completion.choices[0].message.content;
 
-      // 2. Turn the custom hint text into a spoken human voice
       const mp3 = await openai.audio.speech.create({
         model: "tts-1",
-        voice: "shimmer",
+        voice: "nova", // Matches the dictate voice
         input: hintText,
+        speed: 0.9 // Slightly slowed down for clarity
       });
       const buffer = Buffer.from(await mp3.arrayBuffer());
 
