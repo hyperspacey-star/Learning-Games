@@ -16,17 +16,17 @@ export default async function handler(req, res) {
 
   try {
     // ---------------------------------------------------------
-    // ACTION 1: DICTATE THE WORD (Natural Speed, Paced Spelling)
+    // ACTION 1: DICTATE THE WORD (No spoilers this time!)
     // ---------------------------------------------------------
     if (action === 'dictate') {
-      // Create a string that forces the AI to pause between letters
-      // e.g., "a - p - p - l - e... apple."
-      const pacedSpelling = word.split('').join(' - ') + '... ' + word;
+      // Say the word, pause, and repeat it naturally.
+      const spokenPrompt = `The word is... ${word}. ... ${word}.`;
 
       const mp3 = await openai.audio.speech.create({
         model: "tts-1",
         voice: "nova", 
-        input: pacedSpelling, // Feed it the paced string, no artificial slow-down needed!
+        input: spokenPrompt, 
+        speed: 0.9 // Just slightly slowed for clarity, no robotic distortion
       });
       const buffer = Buffer.from(await mp3.arrayBuffer());
       return res.status(200).json({ audio: buffer.toString('base64') });
@@ -57,6 +57,7 @@ export default async function handler(req, res) {
         model: "tts-1",
         voice: "nova",
         input: hintText,
+        speed: 0.95
       });
       const buffer = Buffer.from(await mp3.arrayBuffer());
 
