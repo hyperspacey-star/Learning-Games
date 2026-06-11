@@ -11,7 +11,7 @@
         .btn-start { background-color: #d84315; color: white; padding: 20px 40px; font-size: 28px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; margin-top: 30px; box-shadow: 0 5px 0 #bf360c; }
         .btn-start:active { transform: translateY(5px); box-shadow: none; }
         .btn-audio { background-color: #2196f3; color: white; padding: 15px 25px; font-size: 24px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); margin-bottom: 20px; }
-        .btn-audio:disabled { background-color: #90caf9; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-audio:disabled { background-color: #90caf9; cursor: not-allowed; box-shadow: none; }
         .mode-badge { background-color: #9c27b0; color: white; padding: 5px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; letter-spacing: 2px; display: inline-block; margin-bottom: 10px; }
         #wordDisplay { font-size: 60px; font-weight: bold; color: #4b0082; letter-spacing: 4px; min-height: 90px; margin: 20px 0; }
         #message { font-size: 28px; font-weight: bold; margin-top: 10px; min-height: 40px; color: #ff9800; }
@@ -22,11 +22,7 @@
         .flash-correct { background-color: #4caf50 !important; color: white; border-color: #388e3c; }
         .flash-wrong { background-color: #f44336 !important; color: white; border-color: #d32f2f; }
         #gameArea, #reviewArea, #endScreen { display: none; }
-        
-        /* Review Phase Styles */
-        .review-btn { display: block; width: 80%; max-width: 400px; margin: 15px auto; padding: 20px; font-size: 32px; background-color: #e3f2fd; border: 3px solid #2196f3; color: #0d47a1; border-radius: 15px; cursor: pointer; font-family: monospace; font-weight: bold; box-shadow: 0 5px 0 #1976d2; transition: transform 0.1s; text-transform: uppercase; letter-spacing: 5px; }
-        
-        /* Report Card Styles */
+        .review-btn { display: block; width: 80%; max-width: 400px; margin: 15px auto; padding: 20px; font-size: 32px; background-color: #e3f2fd; border: 3px solid #2196f3; color: #0d47a1; border-radius: 15px; cursor: pointer; font-family: monospace; font-weight: bold; box-shadow: 0 5px 0 #1976d2; text-transform: uppercase; }
         .report-card { border: 4px dashed #4caf50; padding: 20px; border-radius: 15px; background: #f1f8e9; margin: 20px 0; }
         .report-score { font-size: 48px; font-weight: bold; color: #2e7d32; }
     </style>
@@ -70,17 +66,14 @@
     </div>
 
     <script>
-        // === YOUR VERCEL CONNECTION ===
-        // Change this URL to your actual Vercel project domain!
         const VERCEL_URL = "https://abi-s-learning-games.vercel.app/api/tutor";
         
-        let initialWords = ["amount", "boundary", "moisture", "voyage", "sweater"]; // Put your Summer List here!
-
+        let initialWords = ["amount", "boundary", "moisture", "voyage", "sweater"]; 
         let currentQueue = [];
         let missedWordsQueue = [];         
         let currentWordIndex = 0;
         let currentWord = "";
-        let currentAttempt = ""; // Tracks what she typed to send to the AI
+        let currentAttempt = ""; 
         let currentLetterIndex = 0;         
         let mistakes = 0;
         let mistakesOnCurrentLetter = 0;
@@ -89,15 +82,15 @@
         // Report Card Tracking
         let totalWordsToSpell = initialWords.length;
         let firstTryPerfectCount = 0;
-        let isFirstPass = true; // Tells us if we are on the original list or the review queue
+        let isFirstPass = true; 
 
-        let currentAudioData = null; // Holds the AI generated base64 audio
-        let audioCtx; 
+        // THE PRE-LOADER CACHE
+        let preloadedAudio = {}; 
+        let currentAudioData = null; 
+        let audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
 
         function startGame() {
             currentQueue = [...initialWords];
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
             startSpellingPhase();
         }
 
@@ -108,6 +101,32 @@
             currentWordIndex = 0;
             missedWordsQueue = [];
             loadWord();
+        }
+
+        // Helper function to fetch audio from Vercel
+        async function fetchAudioForWord(targetWord) {
+            const response = await fetch(VERCEL_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'dictate', word: targetWord.toLowerCase() })
+            });
+            const data = await response.json();
+            return "data:audio/mp3;base64," + data.audio;
+        }
+
+        // The background secret fetcher
+        async function preloadNextWord() {
+            let nextIndex = currentWordIndex + 1;
+            if (nextIndex < currentQueue.length) {
+                let nextWord = currentQueue[nextIndex].toUpperCase();
+                if (!preloadedAudio[nextWord]) {
+                    try {
+                        preloadedAudio[nextWord] = await fetchAudioForWord(nextWord);
+                    } catch (e) {
+                        console.log("Preload pending...");
+                    }
+                }
+            }
         }
 
         async function loadWord() {
@@ -121,58 +140,38 @@
             document.getElementById('nextBtn').style.display = 'none';
             document.getElementById('message').innerText = "";
             document.getElementById('clueDisplay').style.display = "none";
-            document.getElementById('clueDisplay').innerText = "";
             document.getElementById('keyboard').style.pointerEvents = "auto";
             
             updateLivesDisplay();
             updateWordDisplay();
             buildKeyboard();
 
-            // Fetch the AI Voice Audio for this word immediately
             document.getElementById('audioBtn').innerText = "⏳ Loading Voice...";
             document.getElementById('audioBtn').disabled = true;
             
             try {
-                const response = await fetch(VERCEL_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'dictate', word: currentWord.toLowerCase() })
-                });
-                const data = await response.json();
-                currentAudioData = "data:audio/mp3;base64," + data.audio;
-                
+                // If we already preloaded this word, use it instantly!
+                if (preloadedAudio[currentWord]) {
+                    currentAudioData = preloadedAudio[currentWord];
+                } else {
+                    // Otherwise, fetch it normally
+                    currentAudioData = await fetchAudioForWord(currentWord);
+                    preloadedAudio[currentWord] = currentAudioData;
+                }
+
                 document.getElementById('audioBtn').innerText = "🔊 Listen to Word";
                 document.getElementById('audioBtn').disabled = false;
-                playCurrentAudio(); // Auto-play when ready
-            } catch(e) {
-                document.getElementById('audioBtn').innerText = "⚠️ Connection Error";
-                console.error("Vercel connection failed: ", e);
-            }
+                playCurrentAudio();
+
+                // Start secretly downloading the NEXT word
+                preloadNextWord();
+
+            } catch(e) { console.error(e); }
         }
 
         function playCurrentAudio() {
-            if(currentAudioData) {
-                let audio = new Audio(currentAudioData);
-                audio.play();
-            }
+            if(currentAudioData) new Audio(currentAudioData).play();
         }
-
-        // --- Basic Synth Sounds ---
-        function playTone(type, freq, dur) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = type; 
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime); 
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
-            osc.start();
-            osc.stop(audioCtx.currentTime + dur);
-        }
-        function playDing() { playTone('sine', 1000, 0.3); }
-        function playWrongBuzz() { playTone('sawtooth', 150, 0.2); }
 
         function updateWordDisplay() {
             let displayString = "";
@@ -183,8 +182,7 @@
             document.getElementById('wordDisplay').innerText = displayString.trim();
 
             if (currentLetterIndex === currentWord.length) {
-                document.getElementById('message').innerText = wordFailedThisRound ? "We'll practice this one again later!" : "✅ Perfect!";
-                document.getElementById('message').style.color = wordFailedThisRound ? "#f57f17" : "#4caf50";
+                document.getElementById('message').innerText = wordFailedThisRound ? "Good job!" : "✅ Perfect!";
                 document.getElementById('keyboard').style.pointerEvents = "none";
                 document.getElementById('nextBtn').style.display = 'block';
             }
@@ -196,74 +194,39 @@
             for(let i=0; i<livesLeft; i++) heartString += "❤️";
             for(let i=0; i<mistakes; i++) heartString += "🖤";
             document.getElementById('livesDisplay').innerText = heartString;
-
-            if (livesLeft <= 0) {
-                document.getElementById('message').innerText = "❌ We will definitely practice this one again!";
-                document.getElementById('message').style.color = "#f44336";
-                document.getElementById('keyboard').style.pointerEvents = "none";
-                document.getElementById('wordDisplay').innerText = currentWord.split('').join(' ');
-                document.getElementById('nextBtn').style.display = 'block';
-            }
         }
 
-        async function triggerAITutor(expectedLetter) {
+        async function triggerAITutor() {
             let clueDiv = document.getElementById('clueDisplay');
             clueDiv.style.display = "block";
             clueDiv.innerText = "🤖 Miss AI is thinking...";
-            document.getElementById('keyboard').style.pointerEvents = "none"; // Pause typing
 
             try {
                 const response = await fetch(VERCEL_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'hint', 
-                        word: currentWord.toLowerCase(), 
-                        attempt: currentAttempt.toLowerCase() 
-                    })
+                    body: JSON.stringify({ action: 'hint', word: currentWord.toLowerCase(), attempt: currentAttempt.toLowerCase() })
                 });
                 const data = await response.json();
                 clueDiv.innerText = "💡 " + data.hint;
-                
-                // Play Miss AI's voice
-                let hintAudio = new Audio("data:audio/mp3;base64," + data.audio);
-                hintAudio.play();
-                
-                document.getElementById('keyboard').style.pointerEvents = "auto"; // Resume typing
-            } catch(e) {
-                clueDiv.innerText = "💡 Hint: Try sounding out the next letter carefully!";
-                document.getElementById('keyboard').style.pointerEvents = "auto";
-            }
+                new Audio("data:audio/mp3;base64," + data.audio).play();
+            } catch(e) { clueDiv.innerText = "💡 Hint: Try again!"; }
         }
 
         function handleGuess(letter, btnElement) {
             if (mistakes >= 6 || currentLetterIndex >= currentWord.length) return;
+            currentAttempt += letter;
 
-            let expectedLetter = currentWord[currentLetterIndex];
-            currentAttempt += letter; // Log her attempt for the AI
-
-            if (letter === expectedLetter) {
-                playDing();
-                btnElement.classList.add('flash-correct');
-                setTimeout(() => { btnElement.classList.remove('flash-correct'); }, 300);
-                
+            if (letter === currentWord[currentLetterIndex]) {
                 currentLetterIndex++;
                 mistakesOnCurrentLetter = 0; 
                 document.getElementById('clueDisplay').style.display = "none"; 
                 updateWordDisplay();
             } else {
-                playWrongBuzz();
-                btnElement.classList.add('flash-wrong');
-                setTimeout(() => { btnElement.classList.remove('flash-wrong'); }, 300);
-                
-                if (!wordFailedThisRound) wordFailedThisRound = true;
-                
                 mistakes++;
                 mistakesOnCurrentLetter++;
-                
-                if (mistakesOnCurrentLetter >= 2 && mistakes < 6) {
-                    triggerAITutor(expectedLetter); // Trigger Vercel AI!
-                }
+                if (!wordFailedThisRound) wordFailedThisRound = true;
+                if (mistakesOnCurrentLetter >= 2) triggerAITutor();
                 updateLivesDisplay();
             }
         }
@@ -271,40 +234,29 @@
         function buildKeyboard() {
             const keyboardDiv = document.getElementById('keyboard');
             keyboardDiv.innerHTML = ''; 
-            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            for (let i = 0; i < alphabet.length; i++) {
-                let letter = alphabet[i];
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').forEach(letter => {
                 let btn = document.createElement('button');
                 btn.className = 'key'; btn.innerText = letter;
                 btn.onclick = () => handleGuess(letter, btn);
                 keyboardDiv.appendChild(btn);
-            }
+            });
         }
 
         function processNext() {
-            // === REPORT CARD TRACKING LOGIC ===
-            if (isFirstPass && !wordFailedThisRound) {
-                firstTryPerfectCount++;
-            }
-
-            if (wordFailedThisRound) {
-                missedWordsQueue.push({ word: currentWord, errorIndex: 0 });
-            }
+            if (isFirstPass && !wordFailedThisRound) firstTryPerfectCount++;
+            if (wordFailedThisRound) missedWordsQueue.push({ word: currentWord });
 
             currentWordIndex++;
             if (currentWordIndex >= currentQueue.length) {
-                isFirstPass = false; // We finished the main list!
-                if (missedWordsQueue.length > 0) {
-                    startReviewPhase();
-                } else {
-                    showEndScreen();
-                }
+                isFirstPass = false;
+                if (missedWordsQueue.length > 0) startReviewPhase();
+                else showEndScreen();
             } else {
                 loadWord();
             }
         }
 
-        // --- Review Phase ---
+        // --- REVIEW PHASE ---
         let reviewIndex = 0;
 
         function startReviewPhase() {
@@ -319,7 +271,6 @@
             let currentReview = missedWordsQueue[reviewIndex];
             currentWord = currentReview.word.toUpperCase(); 
             
-            // Generate simple distractors
             let options = new Set([currentWord]);
             let vowels = "AEIOU".split("");
             let expectedLetter = currentWord[0];
@@ -340,16 +291,13 @@
                 optionsDiv.appendChild(btn);
             });
 
-            // Fetch audio for review word
             document.getElementById('reviewAudioBtn').innerText = "⏳ Loading...";
             try {
-                const response = await fetch(VERCEL_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'dictate', word: currentWord.toLowerCase() })
-                });
-                const data = await response.json();
-                currentAudioData = "data:audio/mp3;base64," + data.audio;
+                if(preloadedAudio[currentWord]) {
+                    currentAudioData = preloadedAudio[currentWord];
+                } else {
+                    currentAudioData = await fetchAudioForWord(currentWord);
+                }
                 document.getElementById('reviewAudioBtn').innerText = "🔊 Listen to Word";
                 playCurrentAudio();
             } catch(e) { }
@@ -359,10 +307,8 @@
             let allBtns = document.querySelectorAll('.review-btn');
             allBtns.forEach(b => b.style.pointerEvents = 'none'); 
             if (selected === correct) {
-                playDing();
                 btnElement.classList.add('correct-choice');
             } else {
-                playWrongBuzz();
                 btnElement.classList.add('wrong-choice');
                 allBtns.forEach(b => { if (b.innerText === correct) b.classList.add('correct-choice'); });
             }
@@ -379,22 +325,12 @@
             }
         }
 
-        // --- End Screen & Report Card ---
         function showEndScreen() {
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('reviewArea').style.display = 'none';
             document.getElementById('endScreen').style.display = 'block';
-
-            // Populate Report Card
             document.getElementById('reportScore').innerText = `${firstTryPerfectCount} / ${totalWordsToSpell}`;
-            
-            let message = "";
-            let percentage = firstTryPerfectCount / totalWordsToSpell;
-            if(percentage === 1) message = "🌟 Flawless! Incredible memory!";
-            else if (percentage >= 0.8) message = "🚀 Amazing job! Almost perfect!";
-            else message = "💪 Great practice session!";
-            
-            document.getElementById('reportMessage').innerText = message;
+            document.getElementById('reportMessage').innerText = firstTryPerfectCount === totalWordsToSpell ? "🌟 Flawless!" : "💪 Keep practicing!";
         }
     </script>
 </body>
