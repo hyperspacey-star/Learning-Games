@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3rd Grade Spelling Tutor</title>
+    <title>3rd Grade Spelling</title>
     <style>
         body { font-family: 'Comic Sans MS', Arial, sans-serif; padding: 20px; background-color: #f0f8ff; text-align: center; }
         h1 { color: #ff4500; font-size: 36px; margin-bottom: 5px; }
         .card { background-color: white; padding: 30px; border-radius: 15px; margin: 20px auto; max-width: 700px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); }
-        .btn-start { background-color: #d84315; color: white; padding: 20px 40px; font-size: 28px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; margin-top: 30px; box-shadow: 0 5px 0 #bf360c; }
+        .btn-start { background-color: #d84315; color: white; padding: 20px 40px; font-size: 28px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; margin-top: 20px; box-shadow: 0 5px 0 #bf360c; }
         .btn-start:active { transform: translateY(5px); box-shadow: none; }
         .btn-audio { background-color: #2196f3; color: white; padding: 15px 25px; font-size: 24px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); margin-bottom: 20px; }
         .btn-audio:disabled { background-color: #90caf9; cursor: not-allowed; box-shadow: none; }
         .mode-badge { background-color: #4caf50; color: white; padding: 5px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; letter-spacing: 2px; display: inline-block; margin-bottom: 10px; }
-        select { font-size: 20px; padding: 10px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ccc; font-family: inherit; }
+        select { font-size: 22px; padding: 10px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ccc; font-family: inherit; width: 80%; max-width: 400px; }
         #wordDisplay { font-size: 60px; font-weight: bold; color: #4b0082; letter-spacing: 4px; min-height: 90px; margin: 20px 0; }
         #message { font-size: 28px; font-weight: bold; margin-top: 10px; min-height: 40px; color: #ff9800; }
         #clueDisplay { font-size: 24px; font-weight: bold; color: #1976d2; min-height: 35px; margin-top: 5px; padding: 10px; background: #e3f2fd; border-radius: 10px; display: none; }
@@ -32,7 +32,7 @@
 
     <div class="card" id="startScreen">
         <div class="mode-badge">📝 3RD GRADE SPELLING</div>
-        <h1>Summer Practice!</h1>
+        <h1>Master Your Words!</h1>
         <p style="font-size: 20px; color: #555;">Select a word group to begin:</p>
         
         <select id="categorySelect"></select><br>
@@ -52,43 +52,145 @@
 
     <div class="card" id="reviewArea">
         <h1>🔍 Visual Review</h1>
-        <p style="font-size: 24px; color: #555;">Let's review! Which one is spelled correctly?</p>
+        <p style="font-size: 24px; color: #555;" id="reviewInstructions">You missed some words. Let's review them!</p>
         <button class="btn-audio" id="reviewAudioBtn" onclick="playCurrentAudio()">🔊 Listen to Word</button>
         <div id="reviewOptions"></div>
         <button id="nextReviewBtn" class="btn-start" style="display: none; margin: auto; margin-top: 20px; background-color: #4caf50; box-shadow: 0 5px 0 #2e7d32;" onclick="nextReview()">Continue ➡️</button>
     </div>
 
     <div class="card" id="endScreen">
-        <h1>🎉 Practice Complete! 🎉</h1>
+        <h1>🎉 List Complete! 🎉</h1>
         <div class="report-card">
             <h2>Parent Report Card</h2>
             <p style="font-size: 18px; color: #555;">Perfect on the very first try:</p>
             <div class="report-score" id="reportScore">0 / 0</div>
             <p style="font-size: 16px; margin-top: 10px;" id="reportMessage"></p>
         </div>
-        <button class="btn-start" onclick="location.reload()">Play Again 🔄</button>
+        <button class="btn-start" onclick="location.reload()">Back to Menu 🔄</button>
     </div>
 
     <script>
-        // Pre-Generated Dictionary of Grouped Words and Hints
+        // 100 Word Dictionary (10 Groups of 10)
         const spellingDictionary = {
-            "Beach Days": {
-                "ocean": "Hint: The 'sh' sound in the middle is secretly spelled with a C.",
-                "castle": "Hint: The soft 's' sound is made by an S and a silent T.",
-                "bucket": "Hint: Remember, the 'k' sound in the middle is C-K.",
-                "breeze": "Hint: It has a double E, and don't forget the silent E at the very end!"
+            "1. Animals": {
+                "bear": "Hint: The 'air' sound is spelled E-A-R.",
+                "camel": "Hint: It ends with E-L, not A-L.",
+                "eagle": "Hint: It has an 'ea' vowel team at the beginning.",
+                "horse": "Hint: Don't forget the silent E at the end!",
+                "mouse": "Hint: The 'ou' sound is spelled O-U.",
+                "panda": "Hint: It ends with the letter A.",
+                "puppy": "Hint: It has a double P in the middle.",
+                "shark": "Hint: The 'ar' sound is spelled A-R.",
+                "sheep": "Hint: The long E sound is spelled with a double E.",
+                "whale": "Hint: It starts with W-H and has a silent E."
             },
-            "Camping Trip": {
-                "forest": "Hint: It spells exactly how it sounds: for-est.",
-                "nature": "Hint: The 'chur' sound at the end is spelled T-U-R-E.",
-                "lantern": "Hint: Break it into two chunks: lan - tern.",
-                "smore": "Hint: It has a silent E at the end!"
+            "2. School": {
+                "chalk": "Hint: The silent letter in the middle is an L.",
+                "class": "Hint: It ends with a double S.",
+                "grade": "Hint: It has a magic silent E at the end.",
+                "learn": "Hint: The 'er' sound is secretly spelled E-A-R.",
+                "math": "Hint: It ends with the T-H digraph.",
+                "paper": "Hint: The 'er' sound at the end is spelled E-R.",
+                "ruler": "Hint: It ends with E-R.",
+                "study": "Hint: The 'ee' sound at the end is made by a Y.",
+                "teach": "Hint: The 'ee' sound is spelled E-A.",
+                "write": "Hint: It starts with a silent W!"
             },
-            "Summer Action": {
-                "swimming": "Hint: Watch out! You need a double M in the middle.",
-                "travel": "Hint: It ends with E-L, not A-L.",
-                "explore": "Hint: Starts with E-X-P, and ends with a silent E.",
-                "vacation": "Hint: The 'shun' sound at the end is spelled T-I-O-N."
+            "3. Calendar": {
+                "april": "Hint: It starts with a capital A.",
+                "august": "Hint: The 'aw' sound is spelled A-U.",
+                "friday": "Hint: All days end in D-A-Y.",
+                "monday": "Hint: The 'uh' sound is actually spelled with an O.",
+                "month": "Hint: It ends with T-H.",
+                "spring": "Hint: The 'ing' sound is spelled I-N-G.",
+                "summer": "Hint: It has a double M in the middle.",
+                "sunday": "Hint: It spells just like it sounds: sun - day.",
+                "winter": "Hint: The 'er' sound at the end is E-R.",
+                "yearly": "Hint: It is the word 'year' plus L-Y."
+            },
+            "4. Food": {
+                "apple": "Hint: It has a double P and ends with L-E.",
+                "bread": "Hint: The short 'e' sound is spelled E-A.",
+                "candy": "Hint: The 'ee' sound at the end is a Y.",
+                "fruit": "Hint: The 'oo' sound is spelled U-I.",
+                "juice": "Hint: It ends with I-C-E.",
+                "lunch": "Hint: It ends with C-H.",
+                "pizza": "Hint: It has a double Z in the middle!",
+                "snack": "Hint: The 'k' sound at the end is spelled C-K.",
+                "water": "Hint: The 'er' sound is spelled E-R.",
+                "wheat": "Hint: It starts with W-H and has an E-A vowel team."
+            },
+            "5. Home": {
+                "chair": "Hint: The 'air' sound is spelled A-I-R.",
+                "clock": "Hint: The 'k' sound at the end is spelled C-K.",
+                "couch": "Hint: The 'ou' sound is O-U, and it ends in C-H.",
+                "floor": "Hint: The 'or' sound is spelled with a double O.",
+                "glass": "Hint: It ends with a double S.",
+                "house": "Hint: The 'ou' sound is O-U, with a silent E at the end.",
+                "porch": "Hint: It ends with C-H.",
+                "table": "Hint: It ends with L-E.",
+                "towel": "Hint: The 'ow' sound is O-W, and it ends in E-L.",
+                "yard": "Hint: The 'ar' sound is spelled A-R."
+            },
+            "6. Family": {
+                "aunt": "Hint: The 'ah' sound is spelled A-U.",
+                "brother": "Hint: The 'uh' sound is spelled with an O.",
+                "child": "Hint: The long I sound is just the letter I.",
+                "cousin": "Hint: The 'uh' sound is spelled O-U.",
+                "family": "Hint: It ends with a Y.",
+                "father": "Hint: The 'ah' sound is just an A.",
+                "mother": "Hint: The 'uh' sound is spelled with an O.",
+                "niece": "Hint: Remember the rule: I before E!",
+                "sister": "Hint: The 'er' sound at the end is E-R.",
+                "uncle": "Hint: It ends with C-L-E."
+            },
+            "7. Actions": {
+                "catch": "Hint: The 'ch' sound is spelled T-C-H.",
+                "climb": "Hint: It ends with a silent B!",
+                "crawl": "Hint: The 'aw' sound is spelled A-W.",
+                "dance": "Hint: The soft 's' sound is spelled with a C.",
+                "drive": "Hint: It ends with a magic silent E.",
+                "paint": "Hint: The long A sound is spelled A-I.",
+                "sleep": "Hint: The long E sound is a double E.",
+                "speak": "Hint: The long E sound is spelled E-A.",
+                "stand": "Hint: Listen to every sound: s-t-a-n-d.",
+                "watch": "Hint: The 'ch' sound is spelled T-C-H."
+            },
+            "8. Colors & Shapes": {
+                "black": "Hint: The 'k' sound at the end is C-K.",
+                "brown": "Hint: The 'ow' sound is spelled O-W.",
+                "circle": "Hint: Both 's' and 'k' sounds are spelled with a C.",
+                "green": "Hint: The long E sound is a double E.",
+                "orange": "Hint: The soft 'j' sound is spelled G-E.",
+                "purple": "Hint: The 'ur' sound is spelled U-R.",
+                "square": "Hint: The 'kw' sound is spelled Q-U.",
+                "white": "Hint: It starts with W-H and has a magic E.",
+                "yellow": "Hint: The 'oh' sound at the end is O-W.",
+                "round": "Hint: The 'ou' sound is spelled O-U."
+            },
+            "9. Places": {
+                "beach": "Hint: The long E sound is spelled E-A.",
+                "city": "Hint: The soft 's' sound is a C, and it ends in Y.",
+                "field": "Hint: Remember the rule: I before E!",
+                "park": "Hint: The 'ar' sound is A-R.",
+                "river": "Hint: The 'er' sound at the end is E-R.",
+                "store": "Hint: It has a magic silent E at the end.",
+                "street": "Hint: The long E sound is a double E.",
+                "town": "Hint: The 'ow' sound is spelled O-W.",
+                "train": "Hint: The long A sound is spelled A-I.",
+                "world": "Hint: The 'er' sound is spelled O-R."
+            },
+            "10. Tricky Words": {
+                "always": "Hint: It starts with A-L.",
+                "answer": "Hint: It has a silent W in the middle!",
+                "because": "Hint: B-E-C-A-U-S-E.",
+                "could": "Hint: It has a silent L. C-O-U-L-D.",
+                "enough": "Hint: The 'f' sound at the end is G-H.",
+                "friend": "Hint: Remember the rule: I before E!",
+                "guess": "Hint: It starts with G-U.",
+                "people": "Hint: The 'ee' sound is spelled E-O.",
+                "please": "Hint: The long E sound is E-A, and it ends in a silent E.",
+                "should": "Hint: It has a silent L. S-H-O-U-L-D."
             }
         };
 
@@ -105,16 +207,23 @@
         let totalWordsToSpell = 0;
         let firstTryPerfectCount = 0;
         let isFirstPass = true; 
+        let masteredCategories = [];
 
         let currentAudio = null; 
 
-        // Populate the dropdown menu on load
+        // Populate the dropdown menu on load and check memory
         window.onload = function() {
+            masteredCategories = JSON.parse(localStorage.getItem('spelling_mastered')) || [];
             const select = document.getElementById('categorySelect');
             for (let category in spellingDictionary) {
                 let option = document.createElement('option');
                 option.value = category;
-                option.innerText = category;
+                // Add the star if they've mastered it!
+                if (masteredCategories.includes(category)) {
+                    option.innerText = category + " ⭐ Mastered";
+                } else {
+                    option.innerText = category;
+                }
                 select.appendChild(option);
             }
         };
@@ -124,7 +233,8 @@
             // Get all the words for the selected category
             currentQueue = Object.keys(spellingDictionary[currentCategory]);
             totalWordsToSpell = currentQueue.length;
-            
+            isFirstPass = true;
+            firstTryPerfectCount = 0;
             startSpellingPhase();
         }
 
@@ -155,7 +265,7 @@
 
             // Load local audio file
             let wordLower = currentWord.toLowerCase();
-            currentAudio = new Audio(`audio/${wordLower}.wav`); // Change .wav to .mp3 here if needed
+            currentAudio = new Audio(`audio/${wordLower}.wav`); // Ensure files exist in GitHub!
             document.getElementById('audioBtn').disabled = false;
             
             playCurrentAudio();
@@ -164,7 +274,7 @@
         function playCurrentAudio() {
             if(currentAudio) {
                 currentAudio.currentTime = 0;
-                currentAudio.play().catch(e => console.log("Audio file missing or blocked by browser:", e));
+                currentAudio.play().catch(e => console.log("Audio block/missing:", e));
             }
         }
 
@@ -177,7 +287,7 @@
             document.getElementById('wordDisplay').innerText = displayString.trim();
 
             if (currentLetterIndex === currentWord.length) {
-                document.getElementById('message').innerText = wordFailedThisRound ? "Good job!" : "✅ Perfect!";
+                document.getElementById('message').innerText = wordFailedThisRound ? "Good job correcting it!" : "✅ Perfect!";
                 document.getElementById('keyboard').style.pointerEvents = "none";
                 document.getElementById('nextBtn').style.display = 'block';
             }
@@ -194,11 +304,8 @@
         function triggerHint() {
             let clueDiv = document.getElementById('clueDisplay');
             clueDiv.style.display = "block";
-            
-            // Pull the exact hint for this word from the dictionary
             let wordLower = currentWord.toLowerCase();
             let specificHint = spellingDictionary[currentCategory][wordLower];
-            
             clueDiv.innerText = "💡 " + specificHint;
         }
 
@@ -234,25 +341,37 @@
         }
 
         function processNext() {
+            // Track perfection only on the very first pass of the list
             if (isFirstPass && !wordFailedThisRound) firstTryPerfectCount++;
+            
+            // If they failed it, add it to the missed queue for the review phase
             if (wordFailedThisRound) missedWordsQueue.push({ word: currentWord });
 
             currentWordIndex++;
+            
+            // If we finished the current list of words...
             if (currentWordIndex >= currentQueue.length) {
-                isFirstPass = false;
-                if (missedWordsQueue.length > 0) startReviewPhase();
-                else showEndScreen();
+                isFirstPass = false; // We are no longer on the first pass
+                
+                // If there are missed words, go to the review phase
+                if (missedWordsQueue.length > 0) {
+                    startReviewPhase();
+                } else {
+                    // If no missed words, end the game!
+                    showEndScreen();
+                }
             } else {
-                loadWord();
+                loadWord(); // Load the next word in the list
             }
         }
 
-        // --- REVIEW PHASE ---
+        // --- MULTIPLE CHOICE REVIEW PHASE ---
         let reviewIndex = 0;
 
         function startReviewPhase() {
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('reviewArea').style.display = 'block';
+            document.getElementById('reviewInstructions').innerText = `You missed ${missedWordsQueue.length} words. Let's review them before spelling them again!`;
             reviewIndex = 0;
             loadReviewWord();
         }
@@ -262,14 +381,19 @@
             let currentReview = missedWordsQueue[reviewIndex];
             currentWord = currentReview.word.toUpperCase(); 
             
+            // Generate 3 fake misspellings
             let options = new Set([currentWord]);
             let vowels = "AEIOU".split("");
             let expectedLetter = currentWord[0];
             let pool = vowels.includes(expectedLetter) ? vowels : "BCDFGHJKLMNPQRSTVWXYZ".split("");
             pool = pool.sort(() => 0.5 - Math.random());
+            
             for (let char of pool) {
                 if (options.size >= 4) break; 
-                if (char !== expectedLetter) options.add(currentWord.substring(0, 0) + char + currentWord.substring(1));
+                if (char !== expectedLetter) {
+                    // Create a misspelling by swapping the first letter
+                    options.add(currentWord.substring(0, 0) + char + currentWord.substring(1));
+                }
             }
             let optionArray = Array.from(options).sort(() => 0.5 - Math.random());
 
@@ -282,6 +406,7 @@
                 optionsDiv.appendChild(btn);
             });
 
+            // Instant Audio for Review
             let wordLower = currentWord.toLowerCase();
             currentAudio = new Audio(`audio/${wordLower}.wav`);
             playCurrentAudio();
@@ -296,12 +421,23 @@
                 btnElement.classList.add('wrong-choice');
                 allBtns.forEach(b => { if (b.innerText === correct) b.classList.add('correct-choice'); });
             }
-            document.getElementById('nextReviewBtn').style.display = 'block';
+            
+            // Show the next button
+            let nextBtn = document.getElementById('nextReviewBtn');
+            nextBtn.style.display = 'block';
+            
+            // If it's the last review word, change button text
+            if (reviewIndex === missedWordsQueue.length - 1) {
+                nextBtn.innerText = "Re-Spell Missed Words ➡️";
+            } else {
+                nextBtn.innerText = "Next Word ➡️";
+            }
         }
 
         function nextReview() {
             reviewIndex++;
             if (reviewIndex >= missedWordsQueue.length) {
+                // We finished the review. Now, set the queue to ONLY the missed words and restart spelling phase!
                 currentQueue = missedWordsQueue.map(item => item.word);
                 startSpellingPhase();
             } else {
@@ -313,8 +449,19 @@
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('reviewArea').style.display = 'none';
             document.getElementById('endScreen').style.display = 'block';
+            
             document.getElementById('reportScore').innerText = `${firstTryPerfectCount} / ${totalWordsToSpell}`;
-            document.getElementById('reportMessage').innerText = firstTryPerfectCount === totalWordsToSpell ? "🌟 Flawless!" : "💪 Great effort! Keep practicing!";
+            
+            // Save to memory if they got a perfect score!
+            if (firstTryPerfectCount === totalWordsToSpell) {
+                document.getElementById('reportMessage').innerText = "🌟 Flawless! You earned a Mastery Star for this list!";
+                if (!masteredCategories.includes(currentCategory)) {
+                    masteredCategories.push(currentCategory);
+                    localStorage.setItem('spelling_mastered', JSON.stringify(masteredCategories));
+                }
+            } else {
+                document.getElementById('reportMessage').innerText = "💪 Great effort! Keep practicing to get a perfect score on your first try!";
+            }
         }
     </script>
 </body>
