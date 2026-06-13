@@ -263,9 +263,9 @@
             updateWordDisplay();
             buildKeyboard();
 
-            // Load local audio file
+            // Load local audio file (.mp3)
             let wordLower = currentWord.toLowerCase();
-            currentAudio = new Audio(`audio/${wordLower}.wav`); // Ensure files exist in GitHub!
+            currentAudio = new Audio(`audio/${wordLower}.mp3`); // Changed to .mp3
             document.getElementById('audioBtn').disabled = false;
             
             playCurrentAudio();
@@ -406,9 +406,9 @@
                 optionsDiv.appendChild(btn);
             });
 
-            // Instant Audio for Review
+            // Instant Audio for Review (.mp3)
             let wordLower = currentWord.toLowerCase();
-            currentAudio = new Audio(`audio/${wordLower}.wav`);
+            currentAudio = new Audio(`audio/${wordLower}.mp3`); // Changed to .mp3
             playCurrentAudio();
         }
 
