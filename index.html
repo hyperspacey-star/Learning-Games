@@ -1,16 +1,3 @@
-That is incredibly frustrating, but I know exactly why that is happening!
-
-This is almost certainly a browser **Autoplay Policy** or **Memory (Garbage Collection)** issue. In the previous version of the code, every time a new word was loaded, the game created a brand new audio player out of thin air: `currentAudio = new Audio(...)`.
-
-When a player makes a lot of mistakes (getting down to one heart) and takes a little longer on a word, or when they click buttons in rapid succession, modern browsers (especially Safari and Chrome on mobile) will sometimes block the new audio player from starting because it loses track of the "user click" that allows audio to play. Creating too many audio players can also cause the browser to silently drop the audio out of memory.
-
-### The Fix: The "Single Player" Method
-
-Instead of building a new audio player for every single word, we need to build **one** master audio player when the game starts, and then simply change the "CD" (the `.src` file) inside of it whenever we move to the next word.
-
-Here is the fully updated code. I have changed `currentAudio` to instantiate only once at the top, and updated both the spelling and review phases to just swap the track and play!
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -491,5 +478,3 @@ Here is the fully updated code. I have changed `currentAudio` to instantiate onl
     </script>
 </body>
 </html>
-
-```
