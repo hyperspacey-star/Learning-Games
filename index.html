@@ -1,3 +1,16 @@
+That is incredibly frustrating, but I know exactly why that is happening!
+
+This is almost certainly a browser **Autoplay Policy** or **Memory (Garbage Collection)** issue. In the previous version of the code, every time a new word was loaded, the game created a brand new audio player out of thin air: `currentAudio = new Audio(...)`.
+
+When a player makes a lot of mistakes (getting down to one heart) and takes a little longer on a word, or when they click buttons in rapid succession, modern browsers (especially Safari and Chrome on mobile) will sometimes block the new audio player from starting because it loses track of the "user click" that allows audio to play. Creating too many audio players can also cause the browser to silently drop the audio out of memory.
+
+### The Fix: The "Single Player" Method
+
+Instead of building a new audio player for every single word, we need to build **one** master audio player when the game starts, and then simply change the "CD" (the `.src` file) inside of it whenever we move to the next word.
+
+Here is the fully updated code. I have changed `currentAudio` to instantiate only once at the top, and updated both the spelling and review phases to just swap the track and play!
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -209,7 +222,8 @@
         let isFirstPass = true; 
         let masteredCategories = [];
 
-        let currentAudio = null; 
+        // FIX: Create exactly ONE master audio player here, instead of recreating it over and over.
+        let currentAudio = new Audio(); 
 
         // Populate the dropdown menu on load and check memory
         window.onload = function() {
@@ -263,16 +277,17 @@
             updateWordDisplay();
             buildKeyboard();
 
-            // Load local audio file (.mp3)
+            // FIX: Just change the track on our single master player
             let wordLower = currentWord.toLowerCase();
-            currentAudio = new Audio(`audio/${wordLower}.mp3`); // Changed to .mp3
+            currentAudio.src = `audio/${wordLower}.mp3`;
             document.getElementById('audioBtn').disabled = false;
             
             playCurrentAudio();
         }
 
         function playCurrentAudio() {
-            if(currentAudio) {
+            // FIX: Ensure the src actually exists before trying to play
+            if(currentAudio.src) {
                 currentAudio.currentTime = 0;
                 currentAudio.play().catch(e => console.log("Audio block/missing:", e));
             }
@@ -326,6 +341,13 @@
                 if (mistakesOnCurrentLetter >= 2) triggerHint();
                 
                 updateLivesDisplay();
+
+                // If they run out of lives, end the word and allow them to move on
+                if (mistakes >= 6) {
+                    document.getElementById('message').innerText = "Out of tries! We'll review this one later.";
+                    document.getElementById('keyboard').style.pointerEvents = "none";
+                    document.getElementById('nextBtn').style.display = 'block';
+                }
             }
         }
 
@@ -406,31 +428,34 @@
                 optionsDiv.appendChild(btn);
             });
 
-            // Instant Audio for Review (.mp3)
+            // FIX: Swap track on single player for the review phase too
             let wordLower = currentWord.toLowerCase();
-            currentAudio = new Audio(`audio/${wordLower}.mp3`); // Changed to .mp3
+            currentAudio.src = `audio/${wordLower}.mp3`;
             playCurrentAudio();
         }
 
         function checkReviewAnswer(selected, correct, btnElement) {
-            let allBtns = document.querySelectorAll('.review-btn');
-            allBtns.forEach(b => b.style.pointerEvents = 'none'); 
             if (selected === correct) {
                 btnElement.classList.add('correct-choice');
+                
+                // Lock all buttons so they can't click anymore
+                let allBtns = document.querySelectorAll('.review-btn');
+                allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+                // Show the next button ONLY when correct
+                let nextBtn = document.getElementById('nextReviewBtn');
+                nextBtn.style.display = 'block';
+                
+                // If it's the last review word, change button text
+                if (reviewIndex === missedWordsQueue.length - 1) {
+                    nextBtn.innerText = "Re-Spell Missed Words ➡️";
+                } else {
+                    nextBtn.innerText = "Next Word ➡️";
+                }
             } else {
+                // Wrong guess: turn red and disable ONLY this button
                 btnElement.classList.add('wrong-choice');
-                allBtns.forEach(b => { if (b.innerText === correct) b.classList.add('correct-choice'); });
-            }
-            
-            // Show the next button
-            let nextBtn = document.getElementById('nextReviewBtn');
-            nextBtn.style.display = 'block';
-            
-            // If it's the last review word, change button text
-            if (reviewIndex === missedWordsQueue.length - 1) {
-                nextBtn.innerText = "Re-Spell Missed Words ➡️";
-            } else {
-                nextBtn.innerText = "Next Word ➡️";
+                btnElement.style.pointerEvents = 'none';
             }
         }
 
@@ -466,3 +491,5 @@
     </script>
 </body>
 </html>
+
+```
