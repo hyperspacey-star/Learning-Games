@@ -70,7 +70,6 @@
     </div>
 
     <script>
-        // 100 Word Dictionary (10 Groups of 10)
         const spellingDictionary = {
             "1. Animals": {
                 "bear": "Hint: The 'air' sound is spelled E-A-R.",
@@ -209,7 +208,7 @@
         let isFirstPass = true; 
         let masteredCategories = [];
 
-        // FIX: Create exactly ONE master audio player here, instead of recreating it over and over.
+        // Single master audio player
         let currentAudio = new Audio(); 
 
         // Populate the dropdown menu on load and check memory
@@ -264,16 +263,16 @@
             updateWordDisplay();
             buildKeyboard();
 
-            // FIX: Just change the track on our single master player
+            // Change track and force the buffer to clear via .load()
             let wordLower = currentWord.toLowerCase();
             currentAudio.src = `audio/${wordLower}.mp3`;
+            currentAudio.load(); // <-- CLEAR AUDIO BUFFER
             document.getElementById('audioBtn').disabled = false;
             
             playCurrentAudio();
         }
 
         function playCurrentAudio() {
-            // FIX: Ensure the src actually exists before trying to play
             if(currentAudio.src) {
                 currentAudio.currentTime = 0;
                 currentAudio.play().catch(e => console.log("Audio block/missing:", e));
@@ -415,9 +414,10 @@
                 optionsDiv.appendChild(btn);
             });
 
-            // FIX: Swap track on single player for the review phase too
+            // Swap track and clear buffer
             let wordLower = currentWord.toLowerCase();
             currentAudio.src = `audio/${wordLower}.mp3`;
+            currentAudio.load(); // <-- CLEAR AUDIO BUFFER
             playCurrentAudio();
         }
 
